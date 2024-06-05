@@ -14,9 +14,9 @@ import Asset from '../models/Asset';
 const CHUNK_SIZE = 1024 * 1024; // 100MB chunks
 
 cloudinary.config({
-    cloud_name: 'dxjgmitru',
-    api_key: '794655344446673',
-    api_secret: 'hL-XvtfOmwv45v6CmYTGElaxjq8'
+    cloud_name: 'xxxxx',
+    api_key: 'yyyyy',
+    api_secret: 'xxxxxx'
 });
 
 interface IChunk {
