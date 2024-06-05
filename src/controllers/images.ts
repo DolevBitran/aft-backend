@@ -14,17 +14,15 @@ import Asset from '../models/Asset';
 const CHUNK_SIZE = 1024 * 1024; // 100MB chunks
 
 cloudinary.config({
-    cloud_name: 'xxxxx',
-    api_key: 'yyyyy',
-    api_secret: 'xxxxxx'
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 interface IChunk {
     fileIdentifier: string,
     contentRange: string
-    // @ts-ignore
     filename: string,
-    // @ts-ignore
     path: string,
     offset: number,
     totalSize: number,
@@ -58,7 +56,7 @@ const addChunk = async (fileIdentifier: string, chunk: IChunk) => {
         const fileName = `${fileIdentifier}.${chunk.fileExtension}`
         const file = await Promise.all(sortedChunkArray.map(c => getFile(c.path)));
         // Merge all chunks to get file blob
-        const completeFile = file.map(f => b64toBlob(f, 'image/jpg', CHUNK_SIZE))
+        const completeFile = file.map(f => b64toBlob(f as string, 'image/jpg', CHUNK_SIZE))
         const fileBlob = new Blob(completeFile)
         const buff = Buffer.from(await fileBlob.arrayBuffer());
         // Write File to Disk
@@ -88,8 +86,7 @@ const addChunk = async (fileIdentifier: string, chunk: IChunk) => {
     }
 }
 
-// @ts-ignore
-function b64toBlob(b64Data, contentType, sliceSize) {
+function b64toBlob(b64Data: string, contentType: string, sliceSize: number) {
     contentType = contentType || '';
     sliceSize = sliceSize || 512;
 
