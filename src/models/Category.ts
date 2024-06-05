@@ -15,6 +15,8 @@ const CategorySchema = new Schema<ICategory>({
     },
 })
 
+CategorySchema.set('timestamps', true)
+
 
 /**
  * Not directly exported because it is not recommanded to

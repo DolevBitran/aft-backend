@@ -31,6 +31,7 @@ const AssetSchema = new Schema<IAsset>({
     }
 })
 
+AssetSchema.set('timestamps', true)
 
 /**
  * Not directly exported because it is not recommanded to

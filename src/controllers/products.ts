@@ -4,6 +4,7 @@ import asyncWrapper from '../middleware/async';
 import { createCustomError } from '../errors/custom-error';
 import mongoose, { Query } from 'mongoose';
 import Product, { IProduct, IProductDocument } from '../models/Product';
+import Category, { ICategory } from '../models/Category';
 
 
 const getAllProductsStatic = asyncWrapper(async (req: express.Request, res: express.Response) => {
@@ -12,14 +13,19 @@ const getAllProductsStatic = asyncWrapper(async (req: express.Request, res: expr
 });
 
 const getProducts = asyncWrapper(async (req: express.Request, res: express.Response) => {
-    let result: Query<IProductDocument[], IProductDocument> = Product.find({})
+    const filter: { category?: string } = {}
+
+    if (req.query.category) {
+        filter.category = req.query.category as string
+    }
+
+    let result: Query<IProductDocument[], IProductDocument> = Product.find(filter)
     let allProducts: IProduct[]
 
     if (req.query.page || req.query.limit) {
         const page: number = Number(req.query.page) || 1;
         const limit: number = Number(req.query.limit) || 10;
         const skip: number = (page - 1) * limit;
-        const sort: string = String(req.query.sort)
 
         result = result.skip(skip).limit(limit);
         console.log({ skip, limit })
@@ -41,16 +47,27 @@ const getProducts = asyncWrapper(async (req: express.Request, res: express.Respo
     res.status(200).json({ success: true, products: allProducts, count: count || allProducts.length })
 })
 
+const getLandingPageProductData = asyncWrapper(async (req: express.Request, res: express.Response) => {
+    const categories: ICategory[] = await Category.find({})
+    const products = {}
+    await Promise.all(categories.map(async (category) => {
+        // @ts-ignore
+        products[category._id] = await Product.find({ category: category._id }).find({}).limit(10)
+    }))
+    console.log(products)
+    res.status(200).json({ success: true, products, categories })
+})
+
 const createProduct = asyncWrapper(async (req: express.Request, res: express.Response) => {
-    const { title, media, description, categories }: IProduct = req.body
-    const product: IProduct = await Product.create({ title, media, description, categories })
+    const { title, price, media, description, category }: IProduct = req.body
+    const product: IProduct = await (await Product.create({ title, price, description, media, category })).populate(['media.images', 'category'])
     res.status(201).json({ success: true, product })
 })
 
 
 const getProduct = asyncWrapper(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // const { id }: { id: mongoose.Types.ObjectId } = req.body
-    const product: IProduct | null = await Product.findById(req.params.id).populate('categories').exec()
+    const product: IProduct | null = await Product.findById(req.params.id).populate('category').exec()
 
     if (!product) {
         return next(createCustomError('could not find the product id', 404))
@@ -84,5 +101,6 @@ const updateProduct = asyncWrapper(async (req: express.Request, res: express.Res
 export {
     getProducts,
     getProduct,
+    getLandingPageProductData,
     createProduct
 }

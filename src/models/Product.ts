@@ -2,9 +2,10 @@ import mongoose, { Schema, model, Document, ObjectId } from 'mongoose';
 
 interface IProduct {
     title: string;
-    media: { images: mongoose.Schema.Types.ObjectId[] };
+    price: number;
     description: string;
-    categories: { type: Schema.Types.ObjectId, ref: 'User' }[];
+    media: { images: mongoose.Schema.Types.ObjectId[] };
+    category: { type: Schema.Types.ObjectId, ref: 'User' }[];
 }
 
 
@@ -15,26 +16,27 @@ const ProductSchema = new Schema<IProduct>({
         trim: true,
         maxlength: [20, 'title can not be more than 20 characters']
     },
-    categories: {
+    price: {
+        type: Number,
+        required: [true, 'Must provide a price'],
+        // maxlength: [20, 'title can not be more than 20 characters']
+    },
+    category: {
         type: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
         required: [true, 'Must provide a category'],
     },
     media: {
-        type: {
-            images: {
-                type: [mongoose.Schema.Types.ObjectId],
-                ref: 'Asset',
-                required: [true, 'Must provide a source'],
-                trim: true,
-                // validator : (num) => {
-                //     return /[1-9]{1}\d{4}.test(num);
-                //   },
-                //   message: props => `${props.value} is not a valid number!`
-                // }
-            }
+        images: {
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: 'Asset',
+            required: [true, 'Must provide a source'],
+            trim: true,
+            // validator : (num) => {
+            //     return /[1-9]{1}\d{4}.test(num);
+            //   },
+            //   message: props => `${props.value} is not a valid number!`
+            // }
         },
-        required: [true, 'Must provide a source'],
-        trim: true,
     },
     description: {
         type: String,
@@ -44,6 +46,7 @@ const ProductSchema = new Schema<IProduct>({
     }
 })
 
+ProductSchema.set('timestamps', true)
 
 /**
  * Not directly exported because it is not recommanded to

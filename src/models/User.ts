@@ -25,6 +25,7 @@ const UserSchema = new Schema<IUser>({
     }
 });
 
+UserSchema.set('timestamps', true)
 
 /**
  * Not directly exported because it is not recommanded to

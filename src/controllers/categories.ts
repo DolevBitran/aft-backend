@@ -13,7 +13,6 @@ const getAllCategoriesStatic = asyncWrapper(async (req: express.Request, res: ex
 const getCategories = asyncWrapper(async (req: express.Request, res: express.Response) => {
     let result: Query<ICategoryDocument[], ICategoryDocument> = Category.find({})
     let allCategories: ICategory[]
-
     if (req.query.page || req.query.limit) {
         const page: number = Number(req.query.page) || 1;
         const limit: number = Number(req.query.limit) || 10;
