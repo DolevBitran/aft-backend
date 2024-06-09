@@ -54,9 +54,9 @@ app.use(
 // }))
 
 // OAuth2 passport init
-config(passport)
-app.use(passport.initialize());
-app.use(passport.session());
+// config(passport)
+// app.use(passport.initialize());
+// app.use(passport.session());
 
 // routes
 app.use('/api/', categories, products)

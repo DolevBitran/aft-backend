@@ -19,7 +19,7 @@ const getProducts = asyncWrapper(async (req: express.Request, res: express.Respo
         filter.category = req.query.category as string
     }
 
-    let result: Query<IProductDocument[], IProductDocument> = Product.find(filter)
+    let result: Query<IProductDocument[], IProductDocument> = Product.find(filter, "_id title price category media")
     let allProducts: IProduct[]
 
     if (req.query.page || req.query.limit) {
@@ -42,7 +42,8 @@ const getProducts = asyncWrapper(async (req: express.Request, res: express.Respo
 
 
     const count: number = await Product.count()
-    allProducts = await result
+    // Only populate first image in images array
+    allProducts = await result.populate([{ path: 'media.images', options: { limit: 1 } }, 'category'])
 
     res.status(200).json({ success: true, products: allProducts, count: count || allProducts.length })
 })
@@ -52,7 +53,7 @@ const getLandingPageProductData = asyncWrapper(async (req: express.Request, res:
     const products = {}
     await Promise.all(categories.map(async (category) => {
         // @ts-ignore
-        products[category._id] = await Product.find({ category: category._id }).find({}).limit(10)
+        products[category._id] = await Product.find({ category: category._id }, "_id title price category media").limit(10)
     }))
     console.log(products)
     res.status(200).json({ success: true, products, categories })
@@ -67,7 +68,7 @@ const createProduct = asyncWrapper(async (req: express.Request, res: express.Res
 
 const getProduct = asyncWrapper(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // const { id }: { id: mongoose.Types.ObjectId } = req.body
-    const product: IProduct | null = await Product.findById(req.params.id).populate('category').exec()
+    const product: IProduct | null = await Product.findById(req.params.id).populate(['media.images', 'category']).exec()
 
     if (!product) {
         return next(createCustomError('could not find the product id', 404))
