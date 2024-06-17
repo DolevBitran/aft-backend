@@ -6,6 +6,7 @@ import express from 'express';
 
 import products from './routes/products';
 import categories from './routes/categories';
+import cart from './routes/cart';
 import images from './routes/images';
 import auth from './routes/auth';
 import notFound from './routes/notFound';

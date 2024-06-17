@@ -1,10 +1,9 @@
 import express from 'express';
-import User, { IUser, IUserDocument } from '../models/User';
 import asyncWrapper from '../middleware/async';
 import { createCustomError } from '../errors/custom-error';
-import mongoose, { Query } from 'mongoose';
+import { Query } from 'mongoose';
 import Product, { IProduct, IProductDocument } from '../models/Product';
-import Category, { ICategory } from '../models/Category';
+import Category, { ICategoryDocument } from '../models/Category';
 
 
 const getAllProductsStatic = asyncWrapper(async (req: express.Request, res: express.Response) => {
@@ -13,13 +12,16 @@ const getAllProductsStatic = asyncWrapper(async (req: express.Request, res: expr
 });
 
 const getProducts = asyncWrapper(async (req: express.Request, res: express.Response) => {
+    console.log({ sessionID: req.session.id })
     const filter: { category?: string } = {}
 
     if (req.query.category) {
         filter.category = req.query.category as string
     }
 
-    let result: Query<IProductDocument[], IProductDocument> = Product.find(filter, "_id title price category media")
+    console.log({ filter })
+
+    let result: Query<IProductDocument[], IProductDocument> = Product.find(filter, { _id: 1, title: 1, price: 1, category: 1, media: { images: { $slice: 1 } } })
     let allProducts: IProduct[]
 
     if (req.query.page || req.query.limit) {
@@ -35,24 +37,18 @@ const getProducts = asyncWrapper(async (req: express.Request, res: express.Respo
         const sort = String(req.query.sort)
         const sortList = sort.split(',').join(' ');
         result = result.sort(sortList);
-    } // else {
-    // result = result.sort('createdAt');
-    // }
-
-
+    }
 
     const count: number = await Product.count()
     // Only populate first image in images array
-    allProducts = await result.populate([{ path: 'media.images', options: { limit: 1 } }, 'category'])
-
+    allProducts = await result.populate([{ path: 'media.images' }, 'category'])
     res.status(200).json({ success: true, products: allProducts, count: count || allProducts.length })
 })
 
 const getLandingPageProductData = asyncWrapper(async (req: express.Request, res: express.Response) => {
-    const categories: ICategory[] = await Category.find({})
-    const products = {}
+    const categories: ICategoryDocument[] = await Category.find({})
+    const products: { [categoryId: string]: IProduct[] } = {}
     await Promise.all(categories.map(async (category) => {
-        // @ts-ignore
         products[category._id] = await Product.find({ category: category._id }, "_id title price category media").limit(10)
     }))
     console.log(products)
@@ -67,7 +63,6 @@ const createProduct = asyncWrapper(async (req: express.Request, res: express.Res
 
 
 const getProduct = asyncWrapper(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    // const { id }: { id: mongoose.Types.ObjectId } = req.body
     const product: IProduct | null = await Product.findById(req.params.id).populate(['media.images', 'category']).exec()
 
     if (!product) {
@@ -84,20 +79,6 @@ const updateProduct = asyncWrapper(async (req: express.Request, res: express.Res
     }
     res.status(200).json({ success: true, product })
 })
-
-// const deleteUser = asyncWrapper(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-//     const user: IUser | null = await User.findByIdAndRemove(req.params.id).exec()
-
-//     if (!user) {
-//         return next(createCustomError('could not find the user id', 404))
-//     }
-//     res.status(200).json({ success: true, user })
-// })
-
-// const getUserCount = asyncWrapper(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-//     const count: number = await User.count()
-//     res.status(200).json({ success: true, count })
-// })
 
 export {
     getProducts,
