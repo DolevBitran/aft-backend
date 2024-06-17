@@ -1,11 +1,13 @@
 import express from 'express';
 import passport from 'passport';
-import User, { IUser } from '../models/User';
+import User, { IUser, IUserDocument } from '../models/User';
 import asyncWrapper from '../middleware/async';
 import fetch from 'node-fetch';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import RefreshToken, { IRefreshToken, IRefreshTokenDocument, PopulatedIRefreshTokenDocument } from '../models/RefreshToken';
+import { createCustomError } from '../errors/custom-error';
+import { Query } from 'mongoose';
 
 interface IGoogleUser {
     id?: string,
@@ -115,6 +117,46 @@ const signUser = async (user: IGoogleUser) => {
         return null
     }
 }
+
+const getUsers = asyncWrapper(async (req: express.Request, res: express.Response) => {
+    let result: Query<IUserDocument[], IUserDocument> = User.find({})
+    let allUsers: IUser[]
+
+    if (req.query.page || req.query.limit) {
+        const page: number = Number(req.query.page) || 1;
+        const limit: number = Number(req.query.limit) || 10;
+        const skip: number = (page - 1) * limit;
+
+        result = result.skip(skip).limit(limit);
+        console.log({ skip, limit })
+    }
+
+    const count: number = await User.count()
+    allUsers = await result
+    res.status(200).json({ success: true, users: allUsers, count: count || allUsers.length })
+})
+
+const updateUser = asyncWrapper(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const updateOptions = { new: true, runValidators: true }
+    const user: IUser | null = await User.findByIdAndUpdate(req.params.id, req.body, updateOptions).exec()
+
+    if (!user) {
+        return next(createCustomError('could not find the user id', 404))
+    }
+    res.status(200).json({ success: true, user })
+})
+
+const deleteUser = asyncWrapper(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const user: IUser | null = await User.findByIdAndDelete(req.params.id).exec()
+    const userObjectId = req.params.id as string
+
+    if (!user) {
+        return next(createCustomError('could not find the user id', 404))
+    }
+
+    console.log({ PlayerId: user._id || userObjectId })
+    res.status(200).json({ success: true, user })
+})
 
 export {
     redirectGoogleOAuth,

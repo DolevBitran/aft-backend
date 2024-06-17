@@ -24,8 +24,5 @@ const router: express.Router = express.Router()
 
 router.route('/c').post(multipleUpload, acceptChunk)
 router.route('/m').post(multipleUpload, acceptChunkMobile)
-// router.route('/count').get(getUserCount)
-// router.route('/:id').get(getUser).patch(updateUser).delete(deleteUser)
-// router.route('/product').get(getProducts).post(createProduct)// .patch(updateProduct).delete(deleteUser)
-// router.route('/product/id').get(getProduct)
+
 export default router;

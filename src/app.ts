@@ -14,52 +14,57 @@ import notFound from './routes/notFound';
 
 import connectDB from './db/connect';
 import cors from 'cors';
-
-import config from "./config/passport";
-import passport from "passport";
 import session from 'express-session';
-import User, { IUser } from "./models/User";
-import { VerifyCallback } from "passport-google-oauth2";
-import cookieSession from "cookie-session";
 import bodyParser from 'body-parser';
+import { ObjectId } from "mongoose";
+
+declare module 'express-session' {
+    interface SessionData {
+        cart: {
+            [productId: string]: {
+
+            }
+        }
+    }
+}
 
 const app = express();
 
-const allowedOrigins = ['http://localhost:19006', 'http://localhost:19000', 'http://localhost:8081', '*'];
+const allowedOrigins = ['http://localhost:19006', 'http://localhost:19000', 'http://localhost:8081', 'http://10.100.102.104:8081', ' http://10.100.102.16:8081'];
 
 const options: cors.CorsOptions = {
-    origin: '*'
+    origin: (origin: any, callback: any) => {
+        return callback(null, true)
+        // console.log({ origin })
+        // if (allowedOrigins.indexOf(origin) !== -1) {
+        //     callback(null, true)
+        // } else {
+        //     callback(new Error('Not allowed by CORS'))
+        // }
+    },
+    credentials: true
 };
 
+const store = new session.MemoryStore()
 
-// middleware
 app.use(cors(options));
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    cookie: {
+        maxAge: 8 * 60 * 60 * 1000, // 8 hours
+    },
+    resave: false,
+    saveUninitialized: false,
+    store
+}))
 app.use(express.json({ limit: '2mb' }))
 // parse application/json
 app.use(bodyParser.json({ limit: '2mb' }))
 // parse application/x-www-form-urlencoded
 app.use(express.urlencoded({ limit: '2mb', extended: false }))
 
-app.use(
-    cookieSession({
-        maxAge: 24 * 60 * 60 * 1000,
-        keys: [process.env.CLIENT_SECRET],
-    })
-);
-
-// app.use(session({
-//     secret: process.env.CLIENT_SECRET,
-//     resave: false,
-//     saveUninitialized: true
-// }))
-
-// OAuth2 passport init
-// config(passport)
-// app.use(passport.initialize());
-// app.use(passport.session());
-
 // routes
-app.use('/api/', categories, products)
+app.use('/api/', categories, products, cart)
 app.use('/auth/', auth)
 app.use('/image/', images)
 app.use(notFound)
