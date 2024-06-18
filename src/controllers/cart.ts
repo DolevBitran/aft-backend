@@ -1,10 +1,11 @@
 import express from 'express';
 import asyncWrapper from '../middleware/async';
 import CartItem, { CartItemRequestProps, ICartItem, ICartItemDocument } from '../models/CartItem';
+import Asset from '../models/Asset';
 
 const getCart = asyncWrapper(async (req: express.Request, res: express.Response) => {
     const sessionId = req.session.id
-    const result: ICartItem[] = await CartItem.find({ sessionId }).populate('product')
+    const result: ICartItem[] = await CartItem.find({ sessionId }).populate({ path: 'product', populate: 'media.images' })
     res.status(200).json({ success: true, cartItems: result })
 })
 
@@ -34,7 +35,7 @@ const updateCartItem = asyncWrapper(async (req: express.Request, res: express.Re
 const createCartItem = asyncWrapper(async (req: express.Request, res: express.Response) => {
     const { productId, quantity }: CartItemRequestProps = req.body
     const sessionId = req.session.id
-    const cartItem: ICartItemDocument = await (await CartItem.create({ productId, quantity, sessionId })).populate('product')
+    const cartItem: ICartItemDocument = await (await CartItem.create({ productId, quantity, sessionId })).populate({ path: 'product', populate: 'media.images' })
 
     console.log(`${cartItem.quantity}x product ${productId} has been added to ${sessionId} cart.`)
     if (!req.session.cart) {

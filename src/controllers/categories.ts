@@ -54,20 +54,6 @@ const updateCategory = asyncWrapper(async (req: express.Request, res: express.Re
     res.status(200).json({ success: true, category })
 })
 
-// const deleteUser = asyncWrapper(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-//     const user: IUser | null = await User.findByIdAndRemove(req.params.id).exec()
-
-//     if (!user) {
-//         return next(createCustomError('could not find the user id', 404))
-//     }
-//     res.status(200).json({ success: true, user })
-// })
-
-// const getUserCount = asyncWrapper(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-//     const count: number = await User.count()
-//     res.status(200).json({ success: true, count })
-// })
-
 export {
     getCategories,
     getCategory,

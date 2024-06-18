@@ -40,7 +40,7 @@ CartItemSchema.virtual('product', {
     ref: 'Product',
     localField: 'productId',
     foreignField: '_id',
-    justOne: true,
+    justOne: true
 })
 /**
  * Not directly exported because it is not recommanded to
