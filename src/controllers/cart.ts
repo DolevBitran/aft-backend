@@ -1,12 +1,11 @@
 import express from 'express';
 import asyncWrapper from '../middleware/async';
 import CartItem, { CartItemRequestProps, ICartItem, ICartItemDocument } from '../models/CartItem';
-import Asset from '../models/Asset';
 
 const getCart = asyncWrapper(async (req: express.Request, res: express.Response) => {
     const sessionId = req.session.id
     const result: ICartItem[] = await CartItem.find({ sessionId }).populate({ path: 'product', populate: 'media.images' })
-    res.status(200).json({ success: true, cartItems: result })
+    res.status(200).json({ success: true, cartItems: result || [] })
 })
 
 const updateCartItem = asyncWrapper(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -17,6 +16,7 @@ const updateCartItem = asyncWrapper(async (req: express.Request, res: express.Re
         productId,
         sessionId // (SessionID still not initialized on dev)
     }, { $inc: { quantity } }, { new: true })
+        .populate({ path: 'product', populate: 'media.images' })
 
     if (!cartItem) {
         // return next(createCustomError('could not find the product id', 404))
