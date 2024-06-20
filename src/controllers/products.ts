@@ -13,10 +13,14 @@ const getAllProductsStatic = asyncWrapper(async (req: express.Request, res: expr
 
 const getProducts = asyncWrapper(async (req: express.Request, res: express.Response) => {
     console.log({ sessionID: req.session.id })
-    const filter: { category?: string } = {}
+    const filter: { category?: string, title?: { $regex: string, $options: string } } = {}
 
     if (req.query.category) {
         filter.category = req.query.category as string
+    }
+
+    if (req.query.title) {
+        filter.title = { $regex: req.query.title as string, $options: "i" }
     }
 
     console.log({ filter })
@@ -42,6 +46,7 @@ const getProducts = asyncWrapper(async (req: express.Request, res: express.Respo
     const count: number = await Product.count()
     // Only populate first image in images array
     allProducts = await result.populate([{ path: 'media.images' }, 'category'])
+    console.log(allProducts)
     res.status(200).json({ success: true, products: allProducts, count: count || allProducts.length })
 })
 
